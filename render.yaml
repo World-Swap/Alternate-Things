@@ -1,0 +1,18 @@
+# Render Blueprint — deploys this Vite SPA as a Static Site.
+# In the Render dashboard: New → Blueprint, or configure a Static Site manually
+# with the Build Command and Publish Directory below.
+services:
+  - type: web
+    name: alternate-things
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    # Single-page app: send every path to index.html.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
