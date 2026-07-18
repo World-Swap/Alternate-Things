@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Alternate Things</string>
+    <string name="title_activity_main">Alternate Things</string>
+    <string name="package_name">com.worldswap.alternatethings</string>
+    <string name="custom_url_scheme">com.worldswap.alternatethings</string>
+</resources>

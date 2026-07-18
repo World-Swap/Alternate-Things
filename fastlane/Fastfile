@@ -1,0 +1,64 @@
+default_platform(:ios)
+
+# Builds the iOS app on a macOS runner and uploads it to TestFlight.
+# Signing and upload both authenticate with an App Store Connect API key
+# (no certificates/profiles to manage, and no local Xcode needed).
+#
+# Required environment variables (set as GitHub Actions secrets):
+#   APP_STORE_CONNECT_KEY_ID     - the API key's Key ID
+#   APP_STORE_CONNECT_ISSUER_ID  - the API key's Issuer ID
+#   APP_STORE_CONNECT_API_KEY    - base64 of the .p8 key file contents
+#   APPLE_TEAM_ID                - your Apple Developer Team ID
+platform :ios do
+  desc "Build and upload a new build to TestFlight"
+  lane :beta do
+    project = "ios/App/App.xcodeproj"
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY"],
+      is_key_content_base64: true
+    )
+
+    team_id = ENV["APPLE_TEAM_ID"]
+
+    # Use Xcode automatic signing driven by the API key.
+    update_code_signing_settings(
+      use_automatic_signing: true,
+      path: project,
+      team_id: team_id
+    )
+
+    # Unique, monotonically increasing build number for each CI run.
+    build_number = ENV["GITHUB_RUN_NUMBER"] || Time.now.strftime("%Y%m%d%H%M")
+
+    build_app(
+      project: project,
+      scheme: "App",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "App.ipa",
+      clean: true,
+      xcargs: [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyID #{ENV['APP_STORE_CONNECT_KEY_ID']}",
+        "-authenticationKeyIssuerID #{ENV['APP_STORE_CONNECT_ISSUER_ID']}",
+        "-authenticationKeyPath #{api_key[:key_filepath]}",
+        "CURRENT_PROJECT_VERSION=#{build_number}"
+      ].join(" "),
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic",
+        teamID: team_id
+      }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      skip_submission: true
+    )
+  end
+end

@@ -1,0 +1,64 @@
+name: iOS TestFlight
+
+# Builds the app on a GitHub-hosted macOS runner (Xcode preinstalled) and
+# uploads it to TestFlight via Fastlane. No local Mac / Xcode required.
+#
+# Trigger it manually from the Actions tab (Run workflow), or by pushing a
+# version tag like `v1.0.0`.
+#
+# Configure these repository secrets first
+# (Settings → Secrets and variables → Actions):
+#   APP_STORE_CONNECT_KEY_ID     - App Store Connect API key: Key ID
+#   APP_STORE_CONNECT_ISSUER_ID  - App Store Connect API key: Issuer ID
+#   APP_STORE_CONNECT_API_KEY    - base64 of the .p8 file:  base64 -i AuthKey_XXXX.p8 | pbcopy
+#   APPLE_TEAM_ID                - your Apple Developer Team ID
+#
+# One-time in App Store Connect: create the app record with bundle id
+# com.worldswap.alternatethings so TestFlight has somewhere to receive builds.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  testflight:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Build web bundle
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      - name: Set up Ruby + Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - name: Build & upload to TestFlight
+        run: bundle exec fastlane beta
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload IPA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/*.ipa
+          if-no-files-found: ignore
