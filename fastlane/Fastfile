@@ -1,3 +1,6 @@
+require "base64"
+require "tmpdir"
+
 default_platform(:ios)
 
 # Builds the iOS app on a macOS runner and uploads it to TestFlight.
@@ -23,6 +26,12 @@ platform :ios do
 
     team_id = ENV["APPLE_TEAM_ID"]
 
+    # xcodebuild's -authenticationKeyPath needs an absolute path to the .p8 on
+    # disk. The inline (base64) key isn't written to a file by the action, so
+    # decode it to a temp file ourselves.
+    key_path = File.join(Dir.tmpdir, "asc_api_key.p8")
+    File.write(key_path, Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY"]))
+
     # Use Xcode automatic signing driven by the API key.
     update_code_signing_settings(
       use_automatic_signing: true,
@@ -45,7 +54,7 @@ platform :ios do
         "-allowProvisioningUpdates",
         "-authenticationKeyID #{ENV['APP_STORE_CONNECT_KEY_ID']}",
         "-authenticationKeyIssuerID #{ENV['APP_STORE_CONNECT_ISSUER_ID']}",
-        "-authenticationKeyPath #{api_key[:key_filepath]}",
+        "-authenticationKeyPath #{key_path}",
         "CURRENT_PROJECT_VERSION=#{build_number}"
       ].join(" "),
       export_options: {
