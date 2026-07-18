@@ -1,0 +1,12 @@
+{
+  "appId": "com.worldswap.alternatethings",
+  "appName": "Alternate Things",
+  "webDir": "dist",
+  "backgroundColor": "#f5f5f4",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#0ea5e9"
+    }
+  }
+}

@@ -4,6 +4,38 @@ import {
   Plus, Flag, Circle, Check, X, Folder, Trash2, Moon, Sun,
   Search, Bell, Repeat, Hash, RotateCcw,
 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+
+/* --------------------- native local notifications --------------------- */
+/* On native (Capacitor) builds, mirror each to-do's reminder into a real
+   scheduled local notification. On web this is a no-op. */
+let _LN = null;
+async function notifApi() {
+  if (!Capacitor.isNativePlatform()) return null;
+  if (!_LN) _LN = (await import("@capacitor/local-notifications")).LocalNotifications;
+  return _LN;
+}
+const notifId = (todoId) => parseInt(String(todoId).replace(/\D/g, ""), 10) || 1;
+async function syncNotifications(todos) {
+  const api = await notifApi();
+  if (!api) return;
+  let perm = await api.checkPermissions();
+  if (perm.display !== "granted") perm = await api.requestPermissions();
+  if (perm.display !== "granted") return;
+  const pending = await api.getPending();
+  if (pending.notifications.length)
+    await api.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
+  const now = Date.now();
+  const toSchedule = todos
+    .filter((t) => t.status === "open" && !t.trashed && t.reminder && new Date(t.reminder).getTime() > now)
+    .map((t) => ({
+      id: notifId(t.id),
+      title: t.title || "To-Do",
+      body: t.notes || "Reminder",
+      schedule: { at: new Date(t.reminder) },
+    }));
+  if (toSchedule.length) await api.schedule({ notifications: toSchedule });
+}
 
 /* ------------------------------ date helpers ------------------------------ */
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -160,6 +192,11 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  /* keep native local notifications in sync with reminders (no-op on web) */
+  useEffect(() => {
+    syncNotifications(todos).catch(() => {});
+  }, [todos]);
 
   const open = (t) => t.status === "open" && !t.trashed;
   const inToday = (t) =>
