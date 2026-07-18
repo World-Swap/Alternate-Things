@@ -64,6 +64,32 @@ npm run ios            # builds, syncs, and opens Xcode
 # set your Team under Signing & Capabilities, then Product → Archive
 ```
 
+### Ship to TestFlight from CI (no local Xcode needed)
+
+`.github/workflows/ios-testflight.yml` builds the iOS app on a GitHub-hosted
+**macOS runner** (Xcode is preinstalled) and uploads it to TestFlight with
+Fastlane. You never have to run Xcode locally.
+
+**One-time setup:**
+
+1. In **App Store Connect → Users and Access → Integrations → App Store Connect API**,
+   create an API key (Access: *App Manager*). Download the `.p8` (once), and note
+   the **Key ID** and **Issuer ID**.
+2. Create the app record in App Store Connect with bundle id
+   `com.worldswap.alternatethings` so TestFlight can receive builds.
+3. Add these **repository secrets** (Settings → Secrets and variables → Actions):
+   | Secret | Value |
+   |---|---|
+   | `APP_STORE_CONNECT_KEY_ID` | the key's Key ID |
+   | `APP_STORE_CONNECT_ISSUER_ID` | the key's Issuer ID |
+   | `APP_STORE_CONNECT_API_KEY` | `base64 -i AuthKey_XXXX.p8` (the base64 of the .p8) |
+   | `APPLE_TEAM_ID` | your Apple Developer Team ID |
+
+**Run it:** Actions tab → *iOS TestFlight* → **Run workflow**, or push a tag
+like `v1.0.0`. Signing is fully automatic via the API key — no certificates or
+provisioning profiles to manage. Each run gets a unique build number
+(`GITHUB_RUN_NUMBER`) and lands in TestFlight a few minutes later.
+
 ### Submitting to the stores
 
 You need an Apple Developer account and/or Google Play Console account.

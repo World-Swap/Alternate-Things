@@ -21,3 +21,13 @@ ios/App/App/public/
 ios/DerivedData/
 **/*.xcuserstate
 .DS_Store
+
+# Fastlane / CI build output
+/build/
+*.ipa
+*.dSYM.zip
+vendor/bundle
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+fastlane/README.md
