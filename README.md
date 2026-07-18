@@ -25,8 +25,27 @@ It reconstructs the ideas that make Things work: a clean **Area → Project → 
 
 - Floating **Magic Plus** button for quick capture (defaults new items into the current view).
 - Checkbox completion that moves items into the Logbook.
-- To-do detail editor: notes, checklist items, `When` picker, `Deadline` picker, list/project assignment, and tags.
+- To-do detail editor: notes, checklist items, `When` picker, `Deadline` picker, `Reminder`, `Repeat`, list/project assignment, heading, and tags.
 - Project progress rings in the sidebar and header.
+- **Global search** across all to-dos (title + notes).
+- **Trash** with soft-delete, restore, delete-forever, and empty-trash.
+- **Headings** to group to-dos inside a project.
+- **Repeat rules** (daily / weekly / monthly) — completing a repeating to-do spawns the next occurrence.
+- **Reminders** with a date + time.
+- **Create, rename, and delete Areas and Projects** right from the sidebar (double-click a name to rename; hover for actions).
+- **Light + dark themes** with a toggle.
+- **Local persistence** — everything is saved to `localStorage`, so your data survives a reload.
+
+## Deployment
+
+The app is a static single-page build, so it deploys to any static host.
+
+**Render** (a `render.yaml` blueprint is included):
+- New → **Static Site** (not a Web Service — there is no Node server to run).
+- **Build Command:** `npm install && npm run build`
+- **Publish Directory:** `dist`
+
+Or use the blueprint directly: New → **Blueprint** → pick this repo → Render reads `render.yaml`.
 
 ## Getting started
 
@@ -49,4 +68,4 @@ tailwind.config.js    # Tailwind configuration
 
 ## Notes on scope
 
-State is held in memory (seeded with sample data) — there is no persistence, sync, or backend, matching the "local-only, single-user" non-goals in the spec. Cloud sync, calendar integration, widgets, and collaboration are intentionally out of scope.
+State is stored locally in the browser (`localStorage`), seeded with sample data on first run — there is no cloud sync or backend, matching the "local-only, single-user" non-goals in the spec. Cloud sync, calendar integration, widgets, and collaboration are intentionally out of scope.

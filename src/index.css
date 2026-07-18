@@ -11,6 +11,11 @@ body,
 body {
   margin: 0;
   background: #f5f5f4;
+  transition: background 0.2s ease;
+}
+
+html.dark body {
+  background: #0c0a09;
 }
 
 #root {
